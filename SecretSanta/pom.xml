@@ -19,10 +19,10 @@
     </properties>
 
     <parent>
-        <groupId>SecretSanta</groupId>
+        <groupId>NA</groupId>
         <artifactId>NA161219_JSB</artifactId>
         <version>1.0-SNAPSHOT</version>
-        <relativePath>../SecretSanta</relativePath>
+        <!--<relativePath>../SecretSanta</relativePath>-->
     </parent>
 
     <dependencies>
