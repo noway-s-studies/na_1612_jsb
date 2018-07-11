@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import secretsanta.domain.entity.GroupData;
@@ -19,6 +20,7 @@ public class SecretSantaController {
     private GroupDataRepository groupDataRepository;
     private static final String MODEL_KEY_ERRORMESSAGE = "errorMessage";
     private static final String MODEL_KEY_INFOMESSAGE = "infoMessage";
+    private static final String MODEL_KEY_GROUP = "group";
 
 
     /**
@@ -68,6 +70,20 @@ public class SecretSantaController {
             return  "createGroup";
         }
         return "redirect:/groups/"+groupData.getId().toString();
+    }
+
+    @RequestMapping(
+            value = "/groups/{id}",
+            method = RequestMethod.GET
+    )
+    public String showGroup(@PathVariable("id") Long id, Map<String, Object> model){
+        GroupData groupData = groupDataRepository.findOne(id);
+        if (groupData == null) {
+            setErrorMassage(model, "There is no group whit this ID");
+            return "createGroup";
+        }
+        model.put(MODEL_KEY_GROUP, groupData);
+        return "showGroup";
     }
 
     private void setErrorMassage(Map<String,Object> model, String errorMessage) {
