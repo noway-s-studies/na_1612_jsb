@@ -30,6 +30,10 @@ public class Member {
     @Column(name="email", length = 255, nullable = false)
     private String email;
 
+    @OneToOne
+    @JoinColumn(name = "picked_id", nullable = true)
+    private Member picked;
+
     public Member() {
     }
 
@@ -70,6 +74,14 @@ public class Member {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Member getPicked() {
+        return picked;
+    }
+
+    public void setPicked(Member picked) {
+        this.picked = picked;
     }
 
     @Override

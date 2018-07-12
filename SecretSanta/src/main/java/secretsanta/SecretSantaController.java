@@ -1,8 +1,12 @@
 package secretsanta;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -128,5 +132,66 @@ public class SecretSantaController {
         }
 
         return "redirect:/groups/" + id.toString();
+    }
+
+
+    @RequestMapping(
+            value = "/groups/{id}/finish",
+            method = RequestMethod.POST
+    )
+    public String closeGroup(@PathVariable("id") Long id, Map<String, Object> model){
+        GroupData group = groupDataRepo.findOne(id);
+        if (group == null) {
+            setErrorMessage(model, "There is no group with this ID");
+            return "createGroup";
+        }
+
+        model.put(MODEL_KEY_GROUP, group);
+
+        if (group.getState() != GroupState.CREATED) {
+            setErrorMessage(model, "Group is already closed");
+            return "showGroup";
+        }
+
+        if (group.getMembers().size() < 2) {
+            setErrorMessage(model, "Group has too few members");
+            return "showGroup";
+        }
+
+        List<Member> members = pickMembers(group.getMembers());
+
+        System.out.println("------------");
+        for (Member m : members) {
+            System.out.println(m.getName() + " picked " + m.getPicked().getName());
+        }
+        System.out.println("------------");
+
+        setInfoMessage(model, "Group is closed, notification email are sent");
+        return "showGroup";
+    }
+
+    private List<Member> pickMembers(List<Member> members) {
+        while (true) {
+            List<Member> alreadyPickedMembers = new ArrayList<>();
+            try {
+                for (Member member : members) {
+                    List<Member> chooseFrom = members.stream().filter((Member m) -> {
+                        return !m.equals(member) && !alreadyPickedMembers.contains(m);
+                    }).collect(Collectors.toList());
+
+                    if (chooseFrom.size() == 0) {
+                        throw new InvalidPickException();
+                    }
+
+                    Random random = new Random();
+                    Member chosen = chooseFrom.get(random.nextInt(chooseFrom.size()));
+                    alreadyPickedMembers.add(chosen);
+                    member.setPicked(chosen);
+                }
+                return members;
+            } catch (InvalidPickException ex) {
+                continue;
+            }
+        }
     }
 }
