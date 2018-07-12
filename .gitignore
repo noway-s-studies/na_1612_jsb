@@ -32,7 +32,7 @@ hs_err_pid*
 target/
 
 .idea
-localJdbcDB/
+localDatabase/
 NA161219_JSB.iml
 =======
 >>>>>>> cb427433ae1481666444ace9cd24a4f11fedc9f6
