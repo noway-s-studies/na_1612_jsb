@@ -4,6 +4,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Entity
 @Table( name="group_data",
@@ -27,6 +28,19 @@ public class GroupData {
     @Column(name="group_state", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private GroupState state;
+
+    @OneToMany(mappedBy = "group")
+    private List<Member> members;
+
+    public GroupData() {
+
+    }
+
+    public GroupData(Long id, String name, GroupState state) {
+        this.id = id;
+        this.name = name;
+        this.state = state;
+    }
 
     public Long getId() {
         return id;
@@ -52,14 +66,11 @@ public class GroupData {
         this.state = state;
     }
 
-    public GroupData(Long id, String name, GroupState state) {
-
-        this.id = id;
-        this.name = name;
-        this.state = state;
+    public List<Member> getMembers() {
+        return members;
     }
 
-    public GroupData() {
-
+    public void setMembers(List<Member> members) {
+        this.members = members;
     }
 }

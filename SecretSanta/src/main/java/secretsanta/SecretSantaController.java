@@ -12,12 +12,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import secretsanta.domain.entity.GroupData;
 import secretsanta.domain.entity.GroupState;
+import secretsanta.domain.entity.Member;
 import secretsanta.domain.repository.GroupDataRepository;
+import secretsanta.domain.repository.MemberRepository;
 
 @Controller
 public class SecretSantaController {
 
-    private GroupDataRepository groupDataRepository;
+    private GroupDataRepository groupDataRepo;
+    private MemberRepository memberRepo;
     private static final String MODEL_KEY_ERRORMESSAGE = "errorMessage";
     private static final String MODEL_KEY_INFOMESSAGE = "infoMessage";
     private static final String MODEL_KEY_GROUP = "group";
@@ -27,11 +30,14 @@ public class SecretSantaController {
      * A Spring amikor létrehozza ezt a controllert akkor az Autowired helyére
      * beilleszti az általa menedzselt GroupDataRepo példényt
      *
-     * @param groupDataRepository
      */
     @Autowired
-    public SecretSantaController(GroupDataRepository groupDataRepository) {
-        this.groupDataRepository = groupDataRepository;
+    public SecretSantaController(
+            GroupDataRepository groupDataRepo,
+            MemberRepository memberRepo
+    ) {
+        this.groupDataRepo = groupDataRepo;
+        this.memberRepo = memberRepo;
     }
 
     @RequestMapping(
@@ -55,18 +61,18 @@ public class SecretSantaController {
             method = RequestMethod.POST
     )
     public String postCreateGroup(@ModelAttribute GroupData groupData, Map<String, Object> model){
-        GroupData groupByName = groupDataRepository.findByName(groupData.getName());
+        GroupData groupByName = groupDataRepo.findByName(groupData.getName());
         if (groupByName != null){
-            setErrorMassage(model, "Group with the same name exists");
+            setErrorMessage(model, "Group with the same name exists");
             return "createGroup";
         }
         groupData.setId(null);
         groupData.setState(GroupState.CREATED);
         try {
-            groupDataRepository.save(groupData);
+            groupDataRepo.save(groupData);
         } catch (Exception ex){
             Logger.getLogger(SecretSantaController.class.getName()).log(Level.SEVERE, null, ex);
-            setErrorMassage(model, "Internal error, please check the logs");
+            setErrorMessage(model, "Internal error, please check the logs");
             return  "createGroup";
         }
         return "redirect:/groups/"+groupData.getId().toString();
@@ -77,20 +83,50 @@ public class SecretSantaController {
             method = RequestMethod.GET
     )
     public String showGroup(@PathVariable("id") Long id, Map<String, Object> model){
-        GroupData groupData = groupDataRepository.findOne(id);
+        GroupData groupData = groupDataRepo.findOne(id);
         if (groupData == null) {
-            setErrorMassage(model, "There is no group whit this ID");
+            setErrorMessage(model, "There is no group whit this ID");
             return "createGroup";
         }
         model.put(MODEL_KEY_GROUP, groupData);
         return "showGroup";
     }
 
-    private void setErrorMassage(Map<String,Object> model, String errorMessage) {
+    private void setErrorMessage(Map<String,Object> model, String errorMessage) {
         model.put(MODEL_KEY_ERRORMESSAGE, errorMessage);
     }
 
-    private void setInfoMassage(Map<String,Object> model, String infoMessage) {
+    private void setInfoMessage(Map<String,Object> model, String infoMessage) {
         model.put(MODEL_KEY_INFOMESSAGE, infoMessage);
+    }
+
+    @RequestMapping(
+            value = "/groups/{id}/members",
+            method = RequestMethod.POST
+    )
+    public String addMemberToGroup(@ModelAttribute Member member, @PathVariable("id") Long id, Map<String, Object> model) {
+        GroupData group = groupDataRepo.findOne(id);
+        if (group == null) {
+            setErrorMessage(model, "There is no group with this ID");
+            return "createGroup";
+        }
+
+        model.put(MODEL_KEY_GROUP, group);
+
+        if (group.getState() != GroupState.CREATED) {
+            setErrorMessage(model, "Group is closed, you can't add more members");
+            return "showGroup";
+        }
+
+        member.setId(null);
+        member.setGroup(group);
+        try {
+            memberRepo.save(member);
+        } catch (Exception ex) {
+            setErrorMessage(model, "Invalid member data");
+            return "showGroup";
+        }
+
+        return "redirect:/groups/" + id.toString();
     }
 }
