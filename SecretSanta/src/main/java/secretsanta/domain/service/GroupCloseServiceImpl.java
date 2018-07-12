@@ -1,10 +1,10 @@
-package hu.netacademia.secretsanta.domain.service;
+package secretsanta.domain.service;
 
-import hu.netacademia.secretsanta.domain.entity.GroupData;
-import hu.netacademia.secretsanta.domain.entity.GroupState;
-import hu.netacademia.secretsanta.domain.entity.Member;
-import hu.netacademia.secretsanta.domain.repository.GroupDataRepository;
-import hu.netacademia.secretsanta.domain.repository.MemberRepository;
+import secretsanta.domain.entity.GroupData;
+import secretsanta.domain.entity.GroupState;
+import secretsanta.domain.entity.Member;
+import secretsanta.domain.repository.GroupDataRepository;
+import secretsanta.domain.repository.MemberRepository;
 import java.util.List;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
@@ -17,10 +17,12 @@ import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.stereotype.Service;
 
 /**
- *
- * @author java
+ * Spring Been
  */
 @Service
+/**
+ * Minden public függvénye egy darab adatbázis tranzakció lesz
+ */
 @Transactional
 public class GroupCloseServiceImpl implements GroupCloseService {
 
@@ -29,7 +31,10 @@ public class GroupCloseServiceImpl implements GroupCloseService {
     private JavaMailSender mailSender;
 
     @Autowired
-    public GroupCloseServiceImpl(GroupDataRepository groupDataRepo, MemberRepository memberRepo, JavaMailSender mailSender) {
+    public GroupCloseServiceImpl(
+            GroupDataRepository groupDataRepo,
+            MemberRepository memberRepo,
+            JavaMailSender mailSender) {
         this.groupDataRepo = groupDataRepo;
         this.memberRepo = memberRepo;
         this.mailSender = mailSender;
@@ -58,13 +63,13 @@ public class GroupCloseServiceImpl implements GroupCloseService {
         MimeMessagePreparator preparator = new MimeMessagePreparator() {
             @Override
             public void prepare(MimeMessage mm) throws Exception {
-                mm.setRecipient(Message.RecipientType.TO, new InternetAddress(m.getEmail()));
-                mm.setFrom(new InternetAddress("secretsanta@netacademia.hu"));
+                mm.setRecipient(Message.RecipientType.TO,
+                        new InternetAddress(m.getEmail()));
+                mm.setFrom(new InternetAddress("secretsanta@noway.hu"));
                 mm.setSubject("SecretSanta game notification");
                 mm.setText(constructEmail(m));
             }
         };
-
         try {
             this.mailSender.send(preparator);
         } catch (MailException ex) {
@@ -84,5 +89,4 @@ public class GroupCloseServiceImpl implements GroupCloseService {
         sb.append(" group's SecretSanta game");
         return sb.toString();
     }
-
 }

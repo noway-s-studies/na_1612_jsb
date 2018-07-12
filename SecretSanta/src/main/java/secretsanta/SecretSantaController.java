@@ -19,12 +19,14 @@ import secretsanta.domain.entity.GroupState;
 import secretsanta.domain.entity.Member;
 import secretsanta.domain.repository.GroupDataRepository;
 import secretsanta.domain.repository.MemberRepository;
+import secretsanta.domain.service.GroupCloseService;
 
 @Controller
 public class SecretSantaController {
 
     private GroupDataRepository groupDataRepo;
     private MemberRepository memberRepo;
+    private GroupCloseService groupCloseService;
     private static final String MODEL_KEY_ERRORMESSAGE = "errorMessage";
     private static final String MODEL_KEY_INFOMESSAGE = "infoMessage";
     private static final String MODEL_KEY_GROUP = "group";
@@ -38,10 +40,12 @@ public class SecretSantaController {
     @Autowired
     public SecretSantaController(
             GroupDataRepository groupDataRepo,
-            MemberRepository memberRepo
+            MemberRepository memberRepo,
+            GroupCloseService groupCloseService
     ) {
         this.groupDataRepo = groupDataRepo;
         this.memberRepo = memberRepo;
+        this.groupCloseService = groupCloseService;
     }
 
     @RequestMapping(
@@ -160,12 +164,13 @@ public class SecretSantaController {
 
         List<Member> members = pickMembers(group.getMembers());
 
-        System.out.println("------------");
-        for (Member m : members) {
-            System.out.println(m.getName() + " picked " + m.getPicked().getName());
-        }
-        System.out.println("------------");
+//        System.out.println("------------");
+//        for (Member m : members) {
+//            System.out.println(m.getName() + " picked " + m.getPicked().getName());
+//        }
+//        System.out.println("------------");
 
+        groupCloseService.closeGroup(group, members);
         setInfoMessage(model, "Group is closed, notification email are sent");
         return "showGroup";
     }
