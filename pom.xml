@@ -19,6 +19,7 @@
     </parent>
 
     <modules>
+        <module>SantaBackend</module>
         <module>SecretSanta</module>
     </modules>
 

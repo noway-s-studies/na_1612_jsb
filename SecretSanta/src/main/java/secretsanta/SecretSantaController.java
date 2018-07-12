@@ -31,11 +31,9 @@ public class SecretSantaController {
     private static final String MODEL_KEY_INFOMESSAGE = "infoMessage";
     private static final String MODEL_KEY_GROUP = "group";
 
-
     /**
      * A Spring amikor létrehozza ezt a controllert akkor az Autowired helyére
      * beilleszti az általa menedzselt GroupDataRepo példényt
-     *
      */
     @Autowired
     public SecretSantaController(
@@ -68,7 +66,8 @@ public class SecretSantaController {
             value = "/groups",
             method = RequestMethod.POST
     )
-    public String postCreateGroup(@ModelAttribute GroupData groupData, Map<String, Object> model){
+    public String postCreateGroup(@ModelAttribute GroupData groupData,
+                                  Map<String, Object> model){
         GroupData groupByName = groupDataRepo.findByName(groupData.getName());
         if (groupByName != null){
             setErrorMessage(model, "Group with the same name exists");
@@ -79,7 +78,9 @@ public class SecretSantaController {
         try {
             groupDataRepo.save(groupData);
         } catch (Exception ex){
-            Logger.getLogger(SecretSantaController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SecretSantaController.class.getName()).log(Level.SEVERE,
+                    null,
+                    ex);
             setErrorMessage(model, "Internal error, please check the logs");
             return  "createGroup";
         }
@@ -112,20 +113,20 @@ public class SecretSantaController {
             value = "/groups/{id}/members",
             method = RequestMethod.POST
     )
-    public String addMemberToGroup(@ModelAttribute Member member, @PathVariable("id") Long id, Map<String, Object> model) {
+    public String addMemberToGroup(@ModelAttribute Member member,
+                                   @PathVariable("id") Long id,
+                                   Map<String, Object> model) {
         GroupData group = groupDataRepo.findOne(id);
         if (group == null) {
             setErrorMessage(model, "There is no group with this ID");
             return "createGroup";
         }
-
         model.put(MODEL_KEY_GROUP, group);
 
         if (group.getState() != GroupState.CREATED) {
             setErrorMessage(model, "Group is closed, you can't add more members");
             return "showGroup";
         }
-
         member.setId(null);
         member.setGroup(group);
         try {
@@ -134,10 +135,8 @@ public class SecretSantaController {
             setErrorMessage(model, "Invalid member data");
             return "showGroup";
         }
-
         return "redirect:/groups/" + id.toString();
     }
-
 
     @RequestMapping(
             value = "/groups/{id}/finish",
@@ -149,29 +148,43 @@ public class SecretSantaController {
             setErrorMessage(model, "There is no group with this ID");
             return "createGroup";
         }
-
         model.put(MODEL_KEY_GROUP, group);
-
         if (group.getState() != GroupState.CREATED) {
             setErrorMessage(model, "Group is already closed");
             return "showGroup";
         }
-
         if (group.getMembers().size() < 2) {
             setErrorMessage(model, "Group has too few members");
             return "showGroup";
         }
-
         List<Member> members = pickMembers(group.getMembers());
-
 //        System.out.println("------------");
 //        for (Member m : members) {
 //            System.out.println(m.getName() + " picked " + m.getPicked().getName());
 //        }
 //        System.out.println("------------");
-
         groupCloseService.closeGroup(group, members);
         setInfoMessage(model, "Group is closed, notification email are sent");
+        return "showGroup";
+    }
+
+    @RequestMapping(
+            value = "/groups/{id}/check",
+            method = RequestMethod.POST
+    )
+    public String queryPick(@PathVariable("id") Long id,
+                            @ModelAttribute Member member,
+                            Map<String, Object> model) {
+        GroupData group = groupDataRepo.findOne(id);
+        if (group == null) {
+            return redirectToHome();
+        }
+        if (group.getState() != GroupState.LOT_FINISHED) {
+            return redirectToHome();
+        }
+        groupCloseService.sendNotification(id, member.getEmail());
+        setInfoMessage(model, "Notification sent");
+        model.put(MODEL_KEY_GROUP, group);
         return "showGroup";
     }
 
@@ -183,11 +196,9 @@ public class SecretSantaController {
                     List<Member> chooseFrom = members.stream().filter((Member m) -> {
                         return !m.equals(member) && !alreadyPickedMembers.contains(m);
                     }).collect(Collectors.toList());
-
                     if (chooseFrom.size() == 0) {
                         throw new InvalidPickException();
                     }
-
                     Random random = new Random();
                     Member chosen = chooseFrom.get(random.nextInt(chooseFrom.size()));
                     alreadyPickedMembers.add(chosen);
